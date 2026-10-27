@@ -32,6 +32,22 @@ public/                  copied as-is into dist/ on build
    Vite proxies `/api` and `/uploads` to `http://localhost/form/public`
    (override with the `PHP_ORIGIN` / `PHP_PATH` env vars).
 
+## Deploy on Vercel
+
+On Vercel the PHP folder is not used. The API is the Node function `api/app.js`
+(same actions as the PHP one), data lives in **Neon Postgres** and uploaded images and
+voice recordings in **Vercel Blob**. Builds detect Vercel automatically.
+
+1. Import the GitHub repo in Vercel (framework: Vite, defaults are fine).
+2. Project → **Storage** → **Create Database** → **Neon (Postgres)** → connect it to the
+   project. This adds `DATABASE_URL`. Tables are created on the first request.
+3. Project → **Storage** → **Create** → **Blob** → connect it. This adds
+   `BLOB_READ_WRITE_TOKEN`.
+4. **Redeploy** (Deployments → ⋯ → Redeploy) so the new variables are picked up.
+
+Request bodies are capped at 4.5 MB on Vercel, so recordings are captured at 32 kbps
+and uploads are limited to 4 MB each.
+
 ## Build and deploy (cPanel or any PHP host)
 
 1. `npm run build` — produces `dist/` containing the React app **and** the PHP API.

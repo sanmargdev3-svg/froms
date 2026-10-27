@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { api, exportUrl, shareUrl } from '../lib/api.js';
+import { api, exportUrl, fileUrl, shareUrl } from '../lib/api.js';
 
 /** One stored answer as plain text. */
 function answerText(a) {
@@ -88,9 +88,9 @@ export default function Responses() {
                         return (
                           <td key={f.key} className="px-4 py-3 text-slate-700 max-w-[260px]">
                             {a && a.type === 'audio' && a.value ? (
-                              <audio controls preload="none" src={`uploads/${a.value}`} className="h-9 w-56" />
+                              <audio controls preload="none" src={fileUrl(a.value)} className="h-9 w-56" />
                             ) : a && a.type === 'file' && a.value ? (
-                              <a href={`uploads/${a.value}`} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                              <a href={fileUrl(a.value)} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
                                 <i className="bi bi-paperclip" /> {txt}
                               </a>
                             ) : (

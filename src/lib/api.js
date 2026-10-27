@@ -1,6 +1,8 @@
-/* Thin client for public/api/index.php. Paths are relative so the built app
-   works from any sub-folder (e.g. public_html/form/). */
-const ENDPOINT = 'api/index.php';
+/* Thin client for the API. On Vercel it is the Node function at /api/app;
+   anywhere else it is public/api/index.php, addressed relatively so the
+   built app works from any sub-folder (e.g. public_html/form/). */
+/* global __API__ */
+const ENDPOINT = __API__;
 let token = null;
 
 async function csrf() {
@@ -55,6 +57,9 @@ export const exportUrl = id => `${ENDPOINT}?action=export&id=${id}`;
 
 /** Public share link for a slug, based on where the app is served. */
 export const shareUrl = slug => `${location.origin}${location.pathname}#/f/${slug}`;
+
+/** An uploaded answer file: a Blob URL on Vercel, a name in uploads/ on PHP hosting. */
+export const fileUrl = v => (/^https?:/i.test(v) ? v : `uploads/${v}`);
 
 /** A stored image reference (uploads/x.png or https://...) as a usable src. */
 export const mediaUrl = v => (!v ? '' : /^https?:/i.test(v) ? v : v.replace(/^\/+/, ''));

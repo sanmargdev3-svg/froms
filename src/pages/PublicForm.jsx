@@ -51,7 +51,7 @@ function AudioRecorder({ name, file, onFile }) {
     setErr('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, { audioBitsPerSecond: 32000 });
       const chunks = [];
       recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
       recorder.onstop = () => {

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api, exportUrl } from '../lib/api.js';
+import { api, exportUrl, fileUrl } from '../lib/api.js';
 
 const fmt = s => new Date(s.replace(' ', 'T')).toLocaleString('en-GB', {
   day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -258,7 +258,7 @@ export default function Results() {
                             const v = r.data[f.key]?.value;
                             return (
                               <td key={f.key} className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                                {v ? <audio controls preload="none" src={`uploads/${v}`} className="h-9 w-56" />
+                                {v ? <audio controls preload="none" src={fileUrl(v)} className="h-9 w-56" />
                                    : <span className="text-slate-300">No recording</span>}
                               </td>
                             );

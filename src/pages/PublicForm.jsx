@@ -211,6 +211,7 @@ function Runner({ form, preview, onAgain }) {
   const fields = form.fields;
   const layout = S.layout;
   const tf = layout === 'typeform';
+  const gf = layout === 'classic';
 
   /* only the paged layout splits at a "new page" heading */
   const pages = useMemo(() => {
@@ -375,7 +376,7 @@ function Runner({ form, preview, onAgain }) {
   const style = {
     '--p': S.primary, '--s': S.secondary, '--p-rgb': rgbOf(S.primary), '--s-rgb': rgbOf(S.secondary), '--r': RADII[S.corner],
   };
-  const cls = `fcp${tf && !done ? ' tf' : ''}${S.animate ? '' : ' no-anim'}`;
+  const cls = `fcp${tf && !done ? ' tf' : ''}${gf ? ' gf' : ''}${S.animate && !gf ? '' : ' no-anim'}`;
 
   const previewBanner = preview && <div className="alert alert-i"><i className="bi bi-eye" /> Preview mode — nothing is saved.</div>;
 
@@ -411,7 +412,7 @@ function Runner({ form, preview, onAgain }) {
 
   if (limit && !startAt) {
     return (
-      <div className={`fcp${S.animate ? '' : ' no-anim'}`} data-surface={S.surface} style={style}>
+      <div className={cls} data-surface={S.surface} style={style}>
         <div className="wash" />
         <div className="wrap">
           {previewBanner}
@@ -495,7 +496,16 @@ function Runner({ form, preview, onAgain }) {
       <div className="wrap">
         {previewBanner}
 
-        {cover && S.coverStyle === 'cover' ? (
+        {gf ? (
+          <>
+            {cover && <img className="gf-banner" src={cover} alt="" />}
+            <div className="card gf-head">
+              <h1 className="f-title">{form.title}</h1>
+              {form.description && <p className="f-desc">{form.description}</p>}
+              <p className="gf-req">* Indicates required question</p>
+            </div>
+          </>
+        ) : cover && S.coverStyle === 'cover' ? (
           <div className="hero">
             <img src={cover} alt="" />
             <div className="veil" />
@@ -550,6 +560,11 @@ function Runner({ form, preview, onAgain }) {
             </button>
           </div>
 
+          {gf && (
+            <button type="button" className="gf-clear" onClick={() => {
+              if (confirm('Clear all answers?')) { setAnswers({}); setFiles({}); setErrors({}); }
+            }}>Clear form</button>
+          )}
           <p className="hint">
             {pageCount > 1 ? 'Your answers are kept as you move between steps. ' : ''}Never submit passwords through this form.
           </p>

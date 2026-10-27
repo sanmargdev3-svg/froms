@@ -143,7 +143,7 @@ export default function DesignModal({ open, onClose, S, set, title, onPreview })
 
         {tab === 'layout' && (
           <>
-            <div className="grid md:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
               <Choice on={S.layout === 'paged'} onClick={() => set({ layout: 'paged' })} className="p-3.5">
                 <Art on={S.layout === 'paged'} style={{ gridTemplateRows: '6px 1fr 8px' }} bars={[{}, {}, { width: '40%', justifySelf: 'end' }]} />
                 <div className="font-bold text-sm text-slate-800">Paged</div>
@@ -158,6 +158,11 @@ export default function DesignModal({ open, onClose, S, set, title, onPreview })
                 <Art on={S.layout === 'typeform'} style={{ placeContent: 'center' }} bars={[{ height: 9, width: '70%' }, { height: 20 }]} />
                 <div className="font-bold text-sm text-slate-800">Conversational</div>
                 <div className="text-slate-400 text-[11.5px]">One question at a time, full screen, Enter to move on.</div>
+              </Choice>
+              <Choice on={S.layout === 'classic'} onClick={() => set({ layout: 'classic' })} className="p-3.5">
+                <Art on={S.layout === 'classic'} style={{ gridTemplateRows: '10px repeat(3,1fr)' }} bars={[{}, { width: '80%' }, { width: '80%' }, { width: '80%' }]} />
+                <div className="font-bold text-sm text-slate-800">Classic</div>
+                <div className="text-slate-400 text-[11.5px]">Google Forms style: one clean, linear page of plain cards.</div>
               </Choice>
             </div>
             <div className="flex flex-wrap items-center gap-6 mt-5 pt-4 border-t border-slate-100">

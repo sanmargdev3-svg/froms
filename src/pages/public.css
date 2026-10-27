@@ -194,3 +194,76 @@
 .fcp .timer i{color:var(--p)}
 .fcp .timer.low{background:#e11d48;color:#fff;border-color:#e11d48}
 .fcp .timer.low i{color:#fff}
+
+/* ── classic layout: Google Forms look ─────────────────────── */
+.fcp.gf{--r:8px;--line:#dadce0;--muted:#5f6368;--ink:#202124;--ink-2:#202124;--shadow:none;
+  font-family:Roboto,Arial,sans-serif;background:rgba(var(--p-rgb),.09);font-size:14px}
+.fcp.gf[data-surface=dark]{--line:#3c4043;--muted:#9aa0a6;--ink:#e8eaed;--ink-2:#e8eaed;background:#202124}
+.fcp.gf .wash{display:none}
+.fcp.gf .wrap{max-width:770px;padding:12px 12px 48px}
+.fcp.gf .card,.fcp.gf .q{border:1px solid var(--line);border-radius:8px;box-shadow:none;margin-bottom:12px}
+.fcp.gf .gf-banner{width:100%;max-height:190px;object-fit:cover;border-radius:8px;margin-bottom:12px}
+.fcp.gf .gf-head{border-top:10px solid var(--p);padding:22px 24px 18px}
+.fcp.gf .f-title{font-size:32px;font-weight:400;line-height:1.25;letter-spacing:0}
+.fcp.gf .f-desc{color:var(--ink);font-size:14px;margin-top:12px}
+.fcp.gf .gf-req{color:#d93025;font-size:14px;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+
+.fcp.gf .q{padding:24px;position:relative;transition:none}
+.fcp.gf .q:focus-within{border-color:var(--line);box-shadow:inset 6px 0 0 #4285f4}
+.fcp.gf .q.err{border-color:#d93025}
+.fcp.gf .q-label{font-size:16px;font-weight:400;letter-spacing:.1px;line-height:1.5}
+.fcp.gf .q-label .req{color:#d93025}
+.fcp.gf .q-help{font-size:12px;color:var(--muted);margin-top:4px}
+.fcp.gf .q-body{margin-top:16px}
+.fcp.gf .q-err{color:#d93025;font-size:12px;margin-top:14px}
+
+/* section = a card with a coloured title strip */
+.fcp.gf .sec{background:var(--card);border:1px solid var(--line);border-radius:8px;margin:24px 0 12px;overflow:hidden}
+.fcp.gf .sec h2,.fcp.gf .sec h3,.fcp.gf .sec h4{background:var(--p);color:#fff;font-size:16px;font-weight:500;
+  padding:9px 24px;display:inline-block;border-radius:8px 8px 0 0;margin:-1px 0 0 -1px;letter-spacing:.1px}
+.fcp.gf .sec p{color:var(--ink);font-size:14px;margin:0;padding:16px 24px}
+.fcp.gf .sec hr{display:none}
+
+/* inputs: underline only */
+.fcp.gf .in{border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 0;background:transparent;
+  font-size:14px;width:50%;min-width:260px;box-shadow:none}
+.fcp.gf .in:focus{border-bottom:2px solid var(--p);box-shadow:none;padding-bottom:5px}
+.fcp.gf textarea.in{width:100%;min-height:60px;resize:vertical}
+.fcp.gf select.in{border:1px solid var(--line);border-radius:4px;padding:10px 40px 10px 12px;width:auto}
+.fcp.gf input[type=file].in{border:1px dashed var(--line);border-radius:4px;padding:10px;width:100%}
+@media(max-width:600px){ .fcp.gf .in{width:100%;min-width:0} }
+
+/* radio / checkbox */
+.fcp.gf .opts{gap:0}
+.fcp.gf .opt{border:0;background:none;padding:9px 0;border-radius:0;gap:14px}
+.fcp.gf .opt:hover{background:none}
+.fcp.gf .opt:active{transform:none}
+.fcp.gf .opt .box{width:20px;height:20px;border:2px solid var(--muted);background:transparent;border-radius:2px;position:relative}
+.fcp.gf .opt[data-t=radio] .box{border-radius:50%}
+.fcp.gf .opt.on .box{border-color:var(--p);background:transparent}
+.fcp.gf .opt[data-t=radio] .box i{display:none}
+.fcp.gf .opt[data-t=radio].on .box::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--p)}
+.fcp.gf .opt[data-t=check].on .box{background:var(--p)}
+.fcp.gf .opt .txt{font-size:14px}
+
+.fcp.gf .passage{background:transparent;border:1px solid var(--line);border-radius:4px;font-size:14.5px;line-height:1.8}
+.fcp.gf .rate button{font-size:26px}
+
+/* buttons */
+.fcp.gf .btn{border-radius:4px;font-weight:500;font-size:14px;padding:9px 24px;letter-spacing:.25px}
+.fcp.gf .btn-p{background:var(--p);box-shadow:none}
+.fcp.gf .btn-p:hover{transform:none;box-shadow:0 1px 3px rgba(60,64,67,.3);filter:brightness(1.05)}
+.fcp.gf .btn-g{border:1px solid var(--line);color:var(--p)}
+.fcp.gf .nav{margin-top:14px}
+.fcp.gf .nav .grow{margin-left:0}
+.fcp.gf form{position:relative}
+.fcp.gf .gf-clear{position:absolute;right:0;margin-top:-40px;background:none;border:0;color:var(--p);
+  font:500 14px Roboto,Arial,sans-serif;cursor:pointer;padding:9px 8px}
+.fcp.gf .hint{font-size:12px;text-align:left;margin-top:26px}
+.fcp.gf .alert{border-radius:8px}
+.fcp.gf .end{padding:28px 24px;text-align:left;border-top:10px solid var(--p)}
+.fcp.gf .end .tick{margin:0 0 16px;width:56px;height:56px;border-radius:50%;font-size:28px;box-shadow:none;background:var(--p)}
+.fcp.gf .end h1{font-size:28px;font-weight:400}
+.fcp.gf .end .msg{margin-left:0}
+.fcp.gf .end .acts{justify-content:flex-start}
+.fcp.gf .timer{border-radius:8px;box-shadow:0 1px 3px rgba(60,64,67,.3);font-weight:500}

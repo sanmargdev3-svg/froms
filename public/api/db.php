@@ -126,7 +126,7 @@ function clean_settings(array $in): array {
     $text = fn($k, $len) => mb_substr(trim((string)($in[$k] ?? $d[$k])), 0, $len);
 
     return [
-        'layout'      => $enum('layout',     ['paged', 'single', 'typeform']),
+        'layout'      => $enum('layout',     ['paged', 'single', 'typeform', 'classic']),
         'primary'     => clean_hex($in['primary']   ?? '', $d['primary']),
         'secondary'   => clean_hex($in['secondary'] ?? '', $d['secondary']),
         'surface'     => $enum('surface',    ['light', 'dark']),

@@ -23,13 +23,67 @@ function Shell({ icon, title, text }) {
 /** Client-side check; the server repeats it on submit. */
 function check(f, value, file) {
   if (f.type === 'section') return '';
-  const empty = f.type === 'file' ? !file : Array.isArray(value) ? value.length === 0 : String(value ?? '').trim() === '';
+  const empty = f.type === 'file' || f.type === 'audio' ? !file : Array.isArray(value) ? value.length === 0 : String(value ?? '').trim() === '';
   if (empty) return f.required ? 'This question is required.' : '';
   const v = String(value).trim();
   if (f.type === 'email' && !EMAIL.test(v)) return 'Enter a valid email address.';
   if (f.type === 'number' && (v === '' || isNaN(Number(v)))) return 'Enter a number.';
   if (f.type === 'phone' && !PHONE.test(v)) return 'Enter a valid phone number.';
   return '';
+}
+
+const fmtClock = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+/** Records the respondent's voice in the browser and hands back a File. */
+function AudioRecorder({ name, file, onFile }) {
+  const [rec, setRec] = useState(null);       // { recorder, stream }
+  const [secs, setSecs] = useState(0);
+  const [err, setErr] = useState('');
+  const url = useMemo(() => (file ? URL.createObjectURL(file) : ''), [file]);
+  useEffect(() => () => url && URL.revokeObjectURL(url), [url]);
+  useEffect(() => {
+    if (!rec) return;
+    const t = setInterval(() => setSecs(s => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [rec]);
+
+  async function start() {
+    setErr('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+      recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+      recorder.onstop = () => {
+        const type = recorder.mimeType || 'audio/webm';
+        const ext = type.includes('ogg') ? 'ogg' : type.includes('mp4') ? 'm4a' : 'webm';
+        onFile(new File(chunks, `${name}.${ext}`, { type }));
+        stream.getTracks().forEach(t => t.stop());
+      };
+      recorder.start();
+      setSecs(0);
+      setRec({ recorder, stream });
+    } catch {
+      setErr('Microphone not available. Allow microphone access in the browser and try again.');
+    }
+  }
+  function stop() { rec?.recorder.stop(); setRec(null); }
+
+  return (
+    <div className="rec">
+      {rec ? (
+        <button type="button" className="btn btn-p rec-on" onClick={stop}>
+          <i className="bi bi-stop-fill" /> Stop recording · {fmtClock(secs)}
+        </button>
+      ) : (
+        <button type="button" className="btn btn-g" onClick={start}>
+          <i className="bi bi-mic-fill" /> {file ? 'Record again' : 'Start recording'}
+        </button>
+      )}
+      {file && !rec && <audio controls src={url} className="rec-play" />}
+      {err && <p className="q-err"><i className="bi bi-exclamation-circle" /> {err}</p>}
+    </div>
+  );
 }
 
 function Rating({ max, value, onChange }) {
@@ -88,6 +142,14 @@ function Question({ f, i, value, file, error, onChange, onFile, tf, inputRef }) 
       );
       break;
     }
+    case 'audio':
+      body = (
+        <>
+          {f.passage && <div className="passage">{f.passage}</div>}
+          <AudioRecorder name={f.key} file={file} onFile={onFile} />
+        </>
+      );
+      break;
     case 'rating':
       body = <Rating max={+f.max || 5} value={value} onChange={onChange} />;
       break;
@@ -171,6 +233,34 @@ function Runner({ form, preview, onAgain }) {
   const [failed, setFailed] = useState('');
   const [done, setDone] = useState(false);
   const focusRef = useRef(null);
+  const live = useRef({});
+
+  /* time limit: a warning first, then a countdown that auto-submits */
+  const limit = (+S.timeLimit || 0) * 60;
+  const startKey = 'fc_start_' + form.slug + (preview ? '_p' : '');
+  const [startAt, setStartAt] = useState(() => {
+    try { return +sessionStorage.getItem(startKey) || 0; } catch { return 0; }
+  });
+  const [now, setNow] = useState(Date.now());
+  const elapsed = startAt ? Math.floor((now - startAt) / 1000) : 0;
+  const left = Math.max(0, limit - elapsed);
+  const autoSent = useRef(false);
+  function begin() {
+    const t = Date.now();
+    try { sessionStorage.setItem(startKey, String(t)); } catch { /* private mode */ }
+    setStartAt(t); setNow(t);
+  }
+  useEffect(() => {
+    if (!limit || !startAt || done) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [limit, startAt, done]);
+  useEffect(() => {
+    if (limit && startAt && !done && left === 0 && !autoSent.current) {
+      autoSent.current = true;
+      live.current.submit(true);
+    }
+  }, [left, limit, startAt, done]);
 
   const top = () => window.scrollTo({ top: 0, behavior: S.animate ? 'smooth' : 'auto' });
   const setAnswer = (key, v) => {
@@ -197,19 +287,24 @@ function Runner({ form, preview, onAgain }) {
     else { setPage(pageOf(first.key)); top(); }
   }
 
-  async function submit() {
-    const errs = errorsFor(fields);
-    if (Object.keys(errs).length) return showErrors(errs);
+  async function submit(auto = false) {
+    if (!auto) {
+      const errs = errorsFor(fields);
+      if (Object.keys(errs).length) return showErrors(errs);
+    }
 
     const fd = new FormData();
     fd.append('slug', form.slug);
     if (preview) fd.append('preview', '1');
     fd.append('data', JSON.stringify(answers));
+    if (auto) fd.append('auto', '1');
+    if (startAt) fd.append('elapsed', String(Math.floor((Date.now() - startAt) / 1000)));
     Object.entries(files).forEach(([k, file]) => file && fd.append('file_' + k, file));
 
     setSending(true); setFailed('');
     try {
       await api.submit(fd);
+      try { sessionStorage.removeItem(startKey); } catch { /* ignore */ }
       setDone(true);
       top();
     } catch (e) {
@@ -237,8 +332,7 @@ function Runner({ form, preview, onAgain }) {
     setBack(false); setAt(at + 1);
   }
   const goBack = () => { if (at > 0) { setBack(true); setAt(at - 1); } };
-  const live = useRef();
-  live.current = { advance, goBack, at };
+  live.current = { advance, goBack, at, submit };
 
   useEffect(() => {
     if (!tf || done) return;
@@ -315,6 +409,38 @@ function Runner({ form, preview, onAgain }) {
     );
   }
 
+  if (limit && !startAt) {
+    return (
+      <div className={`fcp${S.animate ? '' : ' no-anim'}`} data-surface={S.surface} style={style}>
+        <div className="wash" />
+        <div className="wrap">
+          {previewBanner}
+          <div className="card end">
+            <div className="tick"><i className="bi bi-stopwatch" /></div>
+            <h1>{form.title}</h1>
+            {form.description && <p className="msg">{form.description}</p>}
+            <div className="alert alert-i" style={{ marginTop: 26, textAlign: 'left' }}>
+              <i className="bi bi-exclamation-triangle" />
+              <span>You have a maximum of <b>{S.timeLimit} minutes</b>. The timer starts when you press Start and
+                the form is <b>submitted automatically</b> when the time is up.</span>
+            </div>
+            <div className="acts">
+              <button type="button" className="btn btn-p" onClick={begin}>
+                Start ({S.timeLimit} min) <i className="bi bi-play-fill" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const timer = limit > 0 && (
+    <div className={`timer${left <= 60 ? ' low' : ''}`} title="Time left">
+      <i className="bi bi-stopwatch" /> {fmtClock(left)}
+    </div>
+  );
+
   const renderField = (f, i, isTf) => f.type === 'section'
     ? <Section key={f.key} f={f} i={i} tf={isTf} />
     : <Question key={f.key} f={f} i={i} tf={isTf} value={answers[f.key]} file={files[f.key]} error={errors[f.key]}
@@ -330,6 +456,7 @@ function Runner({ form, preview, onAgain }) {
     return (
       <div className={cls} data-surface={S.surface} style={style}>
         <div className="wash" />
+        {timer}
         {S.progress && <div className="prog"><i style={{ width: fields.length ? ((at + 1) / fields.length) * 100 + '%' : '100%' }} /></div>}
         <div className="wrap">
           {previewBanner}
@@ -363,6 +490,7 @@ function Runner({ form, preview, onAgain }) {
   return (
     <div className={cls} data-surface={S.surface} style={style}>
       <div className="wash" />
+      {timer}
       {S.progress && pageCount > 1 && <div className="prog"><i style={{ width: percent + '%' }} /></div>}
       <div className="wrap">
         {previewBanner}

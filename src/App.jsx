@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Builder from './pages/Builder.jsx';
 import Responses from './pages/Responses.jsx';
 import PublicForm from './pages/PublicForm.jsx';
+import Results from './pages/Results.jsx';
 
 function Admin({ children }) {
   return (
@@ -21,6 +22,7 @@ export default function App() {
       <Route path="/" element={<Admin><Dashboard /></Admin>} />
       <Route path="/builder/:id?" element={<Admin><Builder /></Admin>} />
       <Route path="/responses/:id" element={<Admin><Responses /></Admin>} />
+      <Route path="/results/:id" element={<Admin><Results /></Admin>} />
       <Route path="/f/:slug" element={<PublicForm />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

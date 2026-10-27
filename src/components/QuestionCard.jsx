@@ -2,7 +2,7 @@ import Switch from './Switch.jsx';
 import { TYPES } from '../lib/settings.js';
 
 const HSIZE = { 2: 'text-lg', 3: 'text-base', 4: 'text-sm' };
-const NO_PLACEHOLDER = ['section', 'radio', 'checkbox', 'select', 'rating', 'file', 'date', 'time'];
+const NO_PLACEHOLDER = ['section', 'radio', 'checkbox', 'select', 'rating', 'file', 'audio', 'date', 'time'];
 const accentSoft = 'bg-[var(--fc-soft)] text-[var(--fc)]';
 
 /** The read-only look of a question, as the respondent will roughly see it. */
@@ -20,6 +20,7 @@ function Preview({ f }) {
           {opts.slice(0, 4).map((o, i) => (
             <div key={i} className="flex items-center gap-2 text-sm text-slate-500 py-0.5">
               <span className={`w-4 h-4 border border-slate-300 inline-block ${f.type === 'radio' ? 'rounded-full' : 'rounded'}`} />{o}
+              {f.correct === o && <i className="bi bi-check-circle-fill text-emerald-500" title="Correct answer" />}
             </div>
           ))}
           {opts.length > 4 && <div className="text-xs text-slate-400 ps-6">+ {opts.length - 4} more</div>}
@@ -28,6 +29,12 @@ function Preview({ f }) {
     }
     case 'rating':   return <div>{Array.from({ length: f.max || 5 }, (_, i) => <i key={i} className="bi bi-star text-amber-400 me-1" />)}</div>;
     case 'file':     return <div className={box}><i className="bi bi-upload me-1" />Choose a file…</div>;
+    case 'audio':    return (
+      <>
+        {f.passage && <div className="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-3 mb-2 line-clamp-3 whitespace-pre-line">{f.passage}</div>}
+        <div className={box}><i className="bi bi-mic me-1" />Record voice…</div>
+      </>
+    );
     case 'date':     return <div className={`${box} flex justify-between`}>dd / mm / yyyy<i className="bi bi-calendar-event" /></div>;
     case 'time':     return <div className={`${box} flex justify-between`}>--:--<i className="bi bi-clock" /></div>;
     default:         return <div className={box}>{f.placeholder || 'Short answer text'}</div>;
@@ -133,10 +140,18 @@ export default function QuestionCard({ f, num, open, onOpen, onClose, onChange, 
                     {f.type === 'checkbox' ? <i className="bi bi-square" /> : f.type === 'radio' ? <i className="bi bi-circle" /> : `${i + 1}.`}
                   </span>
                   <input value={o} placeholder={`Option ${i + 1}`}
-                         onChange={e => set({ options: f.options.map((x, j) => (j === i ? e.target.value : x)) })}
+                         onChange={e => set({ options: f.options.map((x, j) => (j === i ? e.target.value : x)),
+                                              ...(f.correct === o ? { correct: e.target.value } : {}) })}
                          className={`${inline} flex-1 text-sm text-slate-700`} />
+                  {f.type !== 'checkbox' && (
+                    <button title={f.correct === o ? 'Correct answer (click to clear)' : 'Mark as the correct answer'}
+                            className={`px-1 ${f.correct === o ? 'text-emerald-500' : 'text-slate-300 hover:text-emerald-500'}`}
+                            onClick={() => set({ correct: f.correct === o ? undefined : o })}>
+                      <i className={`bi ${f.correct === o ? 'bi-check-circle-fill' : 'bi-check-circle'}`} />
+                    </button>
+                  )}
                   <button title="Remove" className="text-slate-300 hover:text-rose-600 px-1"
-                          onClick={() => f.options.length > 1 && set({ options: f.options.filter((_, j) => j !== i) })}>
+                          onClick={() => f.options.length > 1 && set({ options: f.options.filter((_, j) => j !== i), correct: f.correct === o ? undefined : f.correct })}>
                     <i className="bi bi-x-lg" />
                   </button>
                 </div>
@@ -145,6 +160,24 @@ export default function QuestionCard({ f, num, open, onOpen, onClose, onChange, 
                       onClick={() => set({ options: [...(f.options || []), `Option ${(f.options || []).length + 1}`] })}>
                 <i className="bi bi-plus-lg" /> Add option
               </button>
+            </div>
+          )}
+
+          {f.type !== 'checkbox' && t.options && (
+            <p className="text-xs text-slate-400 -mt-2 mb-4">
+              <i className="bi bi-check-circle" /> Tick an option to make this a scored quiz question.
+            </p>
+          )}
+
+          {f.type === 'audio' && (
+            <div className="mb-4">
+              <label className="text-xs font-bold text-slate-500 block mb-1.5">Passage to read aloud</label>
+              <textarea rows={6} value={f.passage || ''} onChange={e => set({ passage: e.target.value })}
+                        placeholder="Paste the text the person should read while recording…"
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[var(--fc)]" />
+              <p className="text-xs text-slate-400 mt-1">
+                {(f.passage || '').trim().split(/\s+/).filter(Boolean).length} words
+              </p>
             </div>
           )}
 

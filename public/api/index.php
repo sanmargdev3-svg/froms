@@ -100,7 +100,7 @@ case 'save':
     require_post(); require_csrf();
     $in = body();
 
-    $allowed = ['text','textarea','email','phone','number','date','time','select','radio','checkbox','rating','file','section'];
+    $allowed = ['text','textarea','email','phone','number','date','time','select','radio','checkbox','rating','file','audio','section'];
     $fields  = [];
     foreach ((array)($in['fields'] ?? []) as $f) {
         $type = in_array($f['type'] ?? '', $allowed, true) ? $f['type'] : 'text';
@@ -117,7 +117,12 @@ case 'save':
                 fn($o) => mb_substr(trim((string)$o), 0, 200), (array)($f['options'] ?? [])
             ), fn($o) => $o !== ''));
             $row['options'] = $opts ?: ['Option 1'];
+            // answer key for quiz questions - never sent to respondents
+            if ($type !== 'checkbox' && isset($f['correct']) && in_array((string)$f['correct'], $row['options'], true)) {
+                $row['correct'] = (string)$f['correct'];
+            }
         }
+        if ($type === 'audio') $row['passage'] = mb_substr(trim((string)($f['passage'] ?? '')), 0, 5000);
         if ($type === 'rating') $row['max'] = max(3, min(10, (int)($f['max'] ?? 5)));
         if ($type === 'section') {
             $lvl = (int)($f['level'] ?? 2);
@@ -218,6 +223,22 @@ case 'responses':
         'fields' => questions_of($form),
         'rows'   => $rows, 'total' => $total, 'page' => $page, 'pages' => $pages]);
 
+/* ------------------------------------- scored results, every row */
+case 'results':
+    $form = find_form((int)($_GET['id'] ?? 0));
+    $rs = db()->prepare('SELECT id, data_json, created_at FROM responses WHERE form_id = ? ORDER BY id DESC');
+    $rs->execute([$form['id']]);
+    $rows = array_map(fn($r) => [
+        'id'         => (int)$r['id'],
+        'created_at' => $r['created_at'],
+        'data'       => json_decode($r['data_json'], true) ?: new stdClass(),
+    ], $rs->fetchAll());
+    json_out(['ok' => true,
+        'form'   => ['id' => (int)$form['id'], 'title' => $form['title'], 'slug' => $form['slug'],
+                     'views' => (int)$form['views']],
+        'fields' => schema_of($form),
+        'rows'   => $rows]);
+
 /* ------------------------------------------------------- CSV export */
 case 'export':
     $form   = find_form((int)($_GET['id'] ?? 0));
@@ -244,7 +265,7 @@ case 'export':
             if (!$a)          { $line[] = ''; continue; }
             $v = $a['value'] ?? '';
             if (is_array($v)) { $line[] = implode(' | ', $v); continue; }
-            if (($a['type'] ?? '') === 'file' && $v !== '') {
+            if (in_array($a['type'] ?? '', ['file', 'audio'], true) && $v !== '') {
                 $line[] = base_url() . '/uploads/' . $v;
                 continue;
             }
@@ -269,11 +290,12 @@ case 'public':
     if (!$preview && !empty($_GET['count'])) {
         db()->prepare('UPDATE forms SET views = views + 1 WHERE id = ?')->execute([$form['id']]);
     }
+    $public = array_map(function ($f) { unset($f['correct']); return $f; }, schema_of($form));
     json_out(['ok' => true, 'form' => [
         'slug'        => $form['slug'],
         'title'       => $form['title'],
         'description' => (string)$form['description'],
-        'fields'      => schema_of($form),
+        'fields'      => $public,
         'settings'    => form_settings($form['settings_json'] ?? null, $form['theme'] ?? null),
     ]]);
 
@@ -291,21 +313,22 @@ case 'submit':
     }
 
     $posted  = json_decode((string)($_POST['data'] ?? ''), true) ?: [];
+    $auto    = !empty($_POST['auto']);   // the time limit ran out: keep whatever was answered
     $answers = $errors = [];
     foreach (questions_of($form) as $f) {
         $key   = $f['key'];
         $label = $f['label'] ?: $key;
 
-        if ($f['type'] === 'file') {
+        if ($f['type'] === 'file' || $f['type'] === 'audio') {
             $up = $_FILES['file_' . $key] ?? null;
             if (!$up || ($up['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-                $answers[$key] = ['label' => $label, 'type' => 'file', 'value' => ''];
+                $answers[$key] = ['label' => $label, 'type' => $f['type'], 'value' => ''];
                 if (!empty($f['required'])) $errors[$key] = 'This question is required.';
                 continue;
             }
             if ($up['error'] !== UPLOAD_ERR_OK) { $errors[$key] = 'Upload failed, try a smaller file.'; continue; }
             if ($preview) {   // nothing is stored in preview mode
-                $answers[$key] = ['label' => $label, 'type' => 'file', 'value' => '', 'original' => $up['name']];
+                $answers[$key] = ['label' => $label, 'type' => $f['type'], 'value' => '', 'original' => $up['name']];
                 continue;
             }
             $ext  = preg_replace('/[^a-z0-9]/', '', strtolower(pathinfo($up['name'], PATHINFO_EXTENSION)));
@@ -316,7 +339,7 @@ case 'submit':
                 $errors[$key] = 'Could not store the file.';
                 continue;
             }
-            $answers[$key] = ['label' => $label, 'type' => 'file', 'value' => $name,
+            $answers[$key] = ['label' => $label, 'type' => $f['type'], 'value' => $name,
                               'original' => mb_substr($up['name'], 0, 255)];
             continue;
         }
@@ -330,7 +353,9 @@ case 'submit':
             $empty = $val === '';
         }
         $answers[$key] = ['label' => $label, 'type' => $f['type'], 'value' => $val];
+        if (isset($f['correct'])) $answers[$key]['correct'] = !$empty && $val === $f['correct'];
 
+        if ($auto) continue;
         if (!empty($f['required']) && $empty) {
             $errors[$key] = 'This question is required.';
         } elseif (!$empty && $f['type'] === 'email' && !filter_var($val, FILTER_VALIDATE_EMAIL)) {
@@ -342,7 +367,10 @@ case 'submit':
         }
     }
 
+    if ($auto) $errors = array_filter($errors, fn($m) => $m !== 'This question is required.');
     if ($errors) json_out(['ok' => false, 'errors' => $errors], 422);
+
+    $answers['_meta'] = ['auto' => $auto, 'elapsed' => max(0, (int)($_POST['elapsed'] ?? 0))];
 
     if (!$preview) {
         db()->prepare('INSERT INTO responses (form_id, data_json, ip, user_agent) VALUES (?,?,?,?)')

@@ -178,3 +178,19 @@
 .fcp-shell h1{font-size:20px;margin:.6rem 0 .3rem;font-weight:700}
 .fcp-shell p{color:#64748b;font-size:14px;margin:0}
 .fcp-shell .ic{font-size:34px;color:#cbd5e1}
+
+/* voice reading */
+.fcp .passage{background:var(--soft);border:1px solid var(--line);border-radius:calc(var(--r) - 6px);
+  padding:16px 18px;line-height:1.85;font-size:15.5px;white-space:pre-line;margin-bottom:14px;color:var(--ink)}
+.fcp .rec{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.fcp .rec-play{height:40px;max-width:100%}
+@keyframes fcp-pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.55)}50%{box-shadow:0 0 0 10px rgba(244,63,94,0)}}
+.fcp .btn.rec-on{background:#e11d48;animation:fcp-pulse 1.4s infinite}
+
+/* countdown */
+.fcp .timer{position:fixed;top:14px;right:14px;z-index:40;display:flex;align-items:center;gap:7px;
+  font-weight:750;font-size:15px;font-variant-numeric:tabular-nums;padding:9px 15px;border-radius:999px;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow)}
+.fcp .timer i{color:var(--p)}
+.fcp .timer.low{background:#e11d48;color:#fff;border-color:#e11d48}
+.fcp .timer.low i{color:#fff}

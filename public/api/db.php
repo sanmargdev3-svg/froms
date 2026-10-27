@@ -90,6 +90,7 @@ function default_settings(): array {
         'endBtnUrl'   => '',
         'endAgain'    => true,
         'endConfetti' => true,
+        'timeLimit'   => 0,            // minutes; 0 = no limit, auto-submits when it runs out
     ];
 }
 
@@ -143,6 +144,7 @@ function clean_settings(array $in): array {
         'endBtnUrl'   => preg_match('#^https?://[^\s"\'<>]{4,500}$#i', trim((string)($in['endBtnUrl'] ?? ''))) ? trim($in['endBtnUrl']) : '',
         'endAgain'    => $bool('endAgain'),
         'endConfetti' => $bool('endConfetti'),
+        'timeLimit'   => max(0, min(300, (int)($in['timeLimit'] ?? 0))),
     ];
 }
 

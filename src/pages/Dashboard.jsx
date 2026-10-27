@@ -152,6 +152,7 @@ export default function Dashboard() {
                           <i className="bi bi-link-45deg" />
                         </CopyButton>
                         <Link to={`/builder/${f.id}`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">Edit</Link>
+                        <Link to={`/results/${f.id}`} className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">Results</Link>
                         <Link to={`/responses/${f.id}`} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800">Data</Link>
                         <RowMenu form={f} onDelete={remove} />
                       </div>

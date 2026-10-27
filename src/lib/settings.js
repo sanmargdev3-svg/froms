@@ -3,7 +3,7 @@ export const DEFAULT_SETTINGS = {
   layout: 'paged', primary: '#6366f1', secondary: '#8b5cf6', surface: 'light',
   corner: 'round', animate: true, progress: true, coverImage: '', coverStyle: 'banner',
   footerImage: '', submitLabel: 'Submit', endTitle: '', endMessage: '', endImage: '',
-  endBtnLabel: '', endBtnUrl: '', endAgain: true, endConfetti: true,
+  endBtnLabel: '', endBtnUrl: '', endAgain: true, endConfetti: true, timeLimit: 0,
 };
 
 export const RADII = { round: '18px', soft: '10px', sharp: '3px' };
@@ -29,6 +29,7 @@ export const TYPES = {
   date:     { label: 'Date',            icon: 'bi-calendar-event',    group: 'Other',  hint: 'Date picker' },
   time:     { label: 'Time',            icon: 'bi-clock',             group: 'Other',  hint: 'Time picker' },
   file:     { label: 'File upload',     icon: 'bi-paperclip',         group: 'Other',  hint: 'Attachments' },
+  audio:    { label: 'Voice reading',   icon: 'bi-mic',               group: 'Other',  hint: 'Read a passage aloud' },
   section:  { label: 'Section title',   icon: 'bi-type-h2',           group: 'Other',  hint: 'Heading / new page' },
 };
 

@@ -7,7 +7,7 @@ function answerText(a) {
   if (a == null || typeof a !== 'object') return a == null ? '' : String(a);
   const v = a.value ?? '';
   if (Array.isArray(v)) return v.join(', ');
-  if (a.type === 'file' && v !== '') return String(a.original || v);
+  if ((a.type === 'file' || a.type === 'audio') && v !== '') return String(a.original || v);
   return String(v);
 }
 
@@ -48,6 +48,7 @@ export default function Responses() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{form.title}</h1>
           <p className="text-sm text-slate-500">{total.toLocaleString()} responses · {form.views.toLocaleString()} views</p>
         </div>
+        <Link to={`/results/${form.id}`} className={`${btn} text-slate-700`}><i className="bi bi-bar-chart" /> Results</Link>
         <Link to={`/builder/${form.id}`} className={`${btn} text-slate-700`}><i className="bi bi-pencil" /> Edit form</Link>
         <a href={shareUrl(form.slug)} target="_blank" rel="noreferrer" className={`${btn} text-slate-700`}><i className="bi bi-box-arrow-up-right" /> Open</a>
         <a href={exportUrl(form.id)} className="text-sm font-semibold px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 inline-flex items-center gap-1.5">
@@ -86,7 +87,9 @@ export default function Responses() {
                         const txt = a ? answerText(a) : '';
                         return (
                           <td key={f.key} className="px-4 py-3 text-slate-700 max-w-[260px]">
-                            {a && a.type === 'file' && a.value ? (
+                            {a && a.type === 'audio' && a.value ? (
+                              <audio controls preload="none" src={`uploads/${a.value}`} className="h-9 w-56" />
+                            ) : a && a.type === 'file' && a.value ? (
                               <a href={`uploads/${a.value}`} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
                                 <i className="bi bi-paperclip" /> {txt}
                               </a>

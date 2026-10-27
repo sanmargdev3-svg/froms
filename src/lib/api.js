@@ -42,6 +42,7 @@ export const api = {
   deleteForm:     id => request('delete_form', { method: 'POST', json: { id } }),
   deleteResponse: (id, response) => request('delete_response', { method: 'POST', json: { id, response } }),
   responses:      (id, page) => request('responses', { params: { id, page } }),
+  results:        id => request('results', { params: { id } }),
   publicForm:     (slug, preview, count) =>
     request('public', { params: { slug, preview: preview ? 1 : '', count: count ? 1 : '' } }),
   submit:         form => request('submit', { method: 'POST', form }),

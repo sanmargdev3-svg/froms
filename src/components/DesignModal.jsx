@@ -165,6 +165,12 @@ export default function DesignModal({ open, onClose, S, set, title, onPreview })
                 <Switch on={S.progress} onChange={v => set({ progress: v })} /></div>
               <div className="flex items-center gap-2"><span className="text-sm text-slate-600">Animations</span>
                 <Switch on={S.animate} onChange={v => set({ animate: v })} /></div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-slate-600"><i className="bi bi-stopwatch" /> Time limit</label>
+                <input type="number" min={0} max={300} className={inS} style={{ width: 80 }} value={S.timeLimit || 0}
+                       onChange={e => set({ timeLimit: Math.max(0, Math.min(300, parseInt(e.target.value, 10) || 0)) })} />
+                <span className="text-sm text-slate-400">min (0 = none)</span>
+              </div>
               <div className="flex items-center gap-2 ms-auto">
                 <label className="text-sm text-slate-600">Submit button</label>
                 <input className={inS} style={{ width: 170 }} maxLength={40} placeholder="Submit"

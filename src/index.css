@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { -webkit-font-smoothing: antialiased; margin: 0; }
+a { text-decoration: none; }
+input:focus, textarea:focus, select:focus { outline: none; }
+.fc-drag-ghost { opacity: .35; }
+.fc-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.fc-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+@media print { nav, footer, .no-print { display: none !important; } }

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+public/api/config.php
+public/uploads/*
+!public/uploads/.htaccess
+.env*
+*.log

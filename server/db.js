@@ -7,9 +7,15 @@ let ready = null;
 
 export function db() {
   if (!sql) {
-    const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-    if (!url) throw Object.assign(new Error('DATABASE_URL is not set. Connect a Neon Postgres database to this Vercel project.'), { status: 500 });
-    sql = neon(url);
+    // Vercel's storage dialog can add a custom prefix (e.g. STORAGE_DATABASE_URL), so accept any of them
+    const env = process.env;
+    const key = ['DATABASE_URL', 'POSTGRES_URL'].find(k => env[k])
+      || Object.keys(env).find(k => /(DATABASE_URL|POSTGRES_URL)$/.test(k) && /^postgres(ql)?:\/\//.test(env[k]));
+    if (!key) {
+      throw Object.assign(new Error('No database connected. In Vercel open Storage, connect a Neon Postgres database '
+        + 'to this project, then redeploy.'), { status: 500 });
+    }
+    sql = neon(env[key]);
   }
   return sql;
 }

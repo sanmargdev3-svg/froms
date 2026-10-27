@@ -24,7 +24,10 @@ async function request(action, { params = {}, method = 'GET', json, form } = {})
     res = await fetch(`${ENDPOINT}?${qs}`, opts);
     j = await res.json();
   } catch {
-    throw Object.assign(new Error('Could not reach the server.'), { data: {} });
+    const hint = location.protocol === 'file:'
+      ? ' The app was opened as a file — open it through Apache instead, e.g. http://localhost/form/'
+      : ` No API answered at ${new URL(ENDPOINT, location.href).href} — check that Apache and MySQL are running in XAMPP and that the api/ folder sits next to index.html.`;
+    throw Object.assign(new Error('Could not reach the server.' + hint), { data: {} });
   }
   if (!j.ok) throw Object.assign(new Error(j.error || 'Request failed'), { data: j, status: res.status });
   return j;

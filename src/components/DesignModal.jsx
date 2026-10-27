@@ -161,8 +161,8 @@ export default function DesignModal({ open, onClose, S, set, title, onPreview })
               </Choice>
               <Choice on={S.layout === 'classic'} onClick={() => set({ layout: 'classic' })} className="p-3.5">
                 <Art on={S.layout === 'classic'} style={{ gridTemplateRows: '10px repeat(3,1fr)' }} bars={[{}, { width: '80%' }, { width: '80%' }, { width: '80%' }]} />
-                <div className="font-bold text-sm text-slate-800">Classic</div>
-                <div className="text-slate-400 text-[11.5px]">Google Forms style: one clean, linear page of plain cards.</div>
+                <div className="font-bold text-sm text-slate-800">Professional</div>
+                <div className="text-slate-400 text-[11.5px]">One linear page: numbered sections, sticky progress bar and timer.</div>
               </Choice>
             </div>
             <div className="flex flex-wrap items-center gap-6 mt-5 pt-4 border-t border-slate-100">

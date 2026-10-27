@@ -48,7 +48,7 @@ export const LAYOUTS = {
   paged:    { label: 'Paged',          icon: 'bi-layout-text-window-reverse' },
   single:   { label: 'One long page',  icon: 'bi-file-earmark-text' },
   typeform: { label: 'Conversational', icon: 'bi-chat-square-dots' },
-  classic:  { label: 'Classic (Google style)', icon: 'bi-card-list' },
+  classic:  { label: 'Professional',   icon: 'bi-card-list' },
 };
 
 export const uid = () => 'f_' + Math.random().toString(36).slice(2, 9);

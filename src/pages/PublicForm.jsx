@@ -104,7 +104,7 @@ function Rating({ max, value, onChange }) {
   );
 }
 
-function Question({ f, i, value, file, error, onChange, onFile, tf, inputRef }) {
+function Question({ f, i, value, file, error, onChange, onFile, tf, inputRef, num, letters }) {
   const id = 'in_' + f.key;
   let body;
   switch (f.type) {
@@ -134,7 +134,7 @@ function Question({ f, i, value, file, error, onChange, onFile, tf, inputRef }) 
                        onChange={() => onChange(radio ? o : on ? list.filter(x => x !== o) : [...list, o], radio)} />
                 <span className="box"><i className="bi bi-check-lg" /></span>
                 <span className="txt">{o}</span>
-                {tf && oi < 26 && <span className="kbd">{LETTERS[oi]}</span>}
+                {(tf || letters) && oi < 26 && <span className="kbd">{LETTERS[oi]}</span>}
               </label>
             );
           })}
@@ -169,9 +169,10 @@ function Question({ f, i, value, file, error, onChange, onFile, tf, inputRef }) 
   }
 
   return (
-    <div className={`q${error ? ' err' : ''}`} style={{ '--i': i }}>
+    <div className={`q${error ? ' err' : ''}${['text', 'email', 'phone', 'number', 'date', 'time', 'select'].includes(f.type) ? '' : ' wide'}${value || file ? ' done' : ''}`} style={{ '--i': i }}>
       <label className="q-label" htmlFor={id}>
-        {f.label || 'Question'}{f.required && <span className="req">*</span>}
+        {num && <span className="qn">{num}</span>}
+        <span>{f.label || 'Question'}{f.required && <span className="req">*</span>}</span>
       </label>
       {f.help && <p className="q-help">{f.help}</p>}
       <div className="q-body">{body}</div>
@@ -180,10 +181,11 @@ function Question({ f, i, value, file, error, onChange, onFile, tf, inputRef }) 
   );
 }
 
-function Section({ f, i, tf }) {
+function Section({ f, i, tf, n }) {
   const Tag = { 2: 'h2', 3: 'h3', 4: 'h4' }[f.level] || 'h2';
   return (
     <div className="sec" style={{ '--i': i }}>
+      {n && <span className="sn">{String(n).padStart(2, '0')}</span>}
       <Tag>{f.label}</Tag>
       {f.help && <p>{f.help}</p>}
       {!tf && <hr />}
@@ -449,6 +451,26 @@ function Runner({ form, preview, onAgain }) {
                 onChange={(v, isRadio) => { setAnswer(f.key, v); if (isTf && isRadio) setTimeout(() => live.current.advance(), 320); }}
                 onFile={file => setFile(f.key, file)} />;
 
+  /* professional layout: numbered sections, quiz-style numbered questions */
+  const renderPro = list => {
+    let sn = 0, qn = 0;
+    return list.map((f, i) => {
+      if (f.type === 'section') { qn = 0; return <Section key={f.key} f={f} i={i} n={++sn} />; }
+      const scored = (f.type === 'radio' || f.type === 'checkbox') ;
+      if (scored) qn++;
+      return (
+        <Question key={f.key} f={f} i={i} value={answers[f.key]} file={files[f.key]} error={errors[f.key]}
+                  num={scored ? qn : undefined} letters={scored}
+                  onChange={v => setAnswer(f.key, v)} onFile={file => setFile(f.key, file)} />
+      );
+    });
+  };
+  const answerable = fields.filter(f => f.type !== 'section');
+  const answered = answerable.filter(f => {
+    const v = answers[f.key];
+    return files[f.key] || (Array.isArray(v) ? v.length : String(v ?? '').trim() !== '');
+  }).length;
+
   /* ── conversational ───────────────────────── */
   if (tf) {
     const f = fields[at];
@@ -491,18 +513,38 @@ function Runner({ form, preview, onAgain }) {
   return (
     <div className={cls} data-surface={S.surface} style={style}>
       <div className="wash" />
-      {timer}
+      {gf ? (
+        <header className="pro-bar">
+          <div className="pro-bar-in">
+            <span className="pro-name">{form.title}</span>
+            <span className="pro-count">{answered} / {answerable.length} answered</span>
+            {limit > 0 && (
+              <span className={`pro-timer${left <= 60 ? ' low' : ''}`}><i className="bi bi-stopwatch" /> {fmtClock(left)}</span>
+            )}
+          </div>
+          <div className="pro-line"><i style={{ width: answerable.length ? (answered / answerable.length) * 100 + '%' : 0 }} /></div>
+        </header>
+      ) : timer}
       {S.progress && pageCount > 1 && <div className="prog"><i style={{ width: percent + '%' }} /></div>}
       <div className="wrap">
         {previewBanner}
 
         {gf ? (
           <>
-            {cover && <img className="gf-banner" src={cover} alt="" />}
-            <div className="card gf-head">
-              <h1 className="f-title">{form.title}</h1>
-              {form.description && <p className="f-desc">{form.description}</p>}
-              <p className="gf-req">* Indicates required question</p>
+            <div className="card pro-head">
+              {cover && <img className="pro-cover" src={cover} alt="" />}
+              <div className="pro-head-in">
+                <h1 className="f-title">{form.title}</h1>
+                {form.description && <p className="f-desc">{form.description}</p>}
+                <div className="pro-chips">
+                  {limit > 0 && <span><i className="bi bi-stopwatch" /> {S.timeLimit} minutes</span>}
+                  <span><i className="bi bi-list-check" /> {answerable.length} questions</span>
+                  {fields.some(f => f.type === 'section') && (
+                    <span><i className="bi bi-layers" /> {fields.filter(f => f.type === 'section').length} sections</span>
+                  )}
+                  <span className="req-note"><b>*</b> required</span>
+                </div>
+              </div>
             </div>
           </>
         ) : cover && S.coverStyle === 'cover' ? (
@@ -542,7 +584,8 @@ function Runner({ form, preview, onAgain }) {
         {failed && <div className="alert alert-e"><i className="bi bi-exclamation-triangle" /> {failed}</div>}
 
         <form noValidate key={'p' + page} onSubmit={e => { e.preventDefault(); isLast ? submit() : next(); }}>
-          {pages[page].map((f, i) => renderField(f, i + 1, false))}
+          {gf ? <div className="pro-grid">{renderPro(pages[page])}</div>
+              : pages[page].map((f, i) => renderField(f, i + 1, false))}
 
           {!fields.length && (
             <div className="card pad" style={{ textAlign: 'center', color: 'var(--muted)' }}>This form has no questions yet.</div>
@@ -554,17 +597,17 @@ function Runner({ form, preview, onAgain }) {
                 <i className="bi bi-arrow-left" /> Back
               </button>
             )}
+            {gf && (
+              <button type="button" className="btn btn-g" onClick={() => {
+                if (confirm('Clear all answers?')) { setAnswers({}); setFiles({}); setErrors({}); }
+              }}><i className="bi bi-arrow-counterclockwise" /> Reset</button>
+            )}
             <button type="submit" className="btn btn-p grow" disabled={sending}>
               {sending ? <><i className="bi bi-arrow-repeat" /> Sending…</>
                 : isLast ? <>{S.submitLabel} <i className="bi bi-send" /></> : <>Next <i className="bi bi-arrow-right" /></>}
             </button>
           </div>
 
-          {gf && (
-            <button type="button" className="gf-clear" onClick={() => {
-              if (confirm('Clear all answers?')) { setAnswers({}); setFiles({}); setErrors({}); }
-            }}>Clear form</button>
-          )}
           <p className="hint">
             {pageCount > 1 ? 'Your answers are kept as you move between steps. ' : ''}Never submit passwords through this form.
           </p>
